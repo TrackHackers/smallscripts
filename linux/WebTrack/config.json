@@ -1,4 +1,5 @@
 {
   "directory_wordlists": ["/opt/useful/SecLists/Discovery/Web-Content/raft-medium-directories-lowercase.txt"],
-  "subdomain_wordlists": ["/opt/useful/SecLists/Discovery/DNS/subdomains-top1million-5000.txt"]
+  "subdomain_wordlists": ["/opt/useful/SecLists/Discovery/DNS/subdomains-top1million-5000.txt"],
+  "vhost_wordlist": "/opt/useful/SecLists/Discovery/DNS/subdomains-top1million-5000.txt"
 }
