@@ -3,6 +3,37 @@ A repository for small scripts to help speed up the Hacking process in HTB
 
 This Repository will be divided into Windows and Linux hacking scripts.
 
+## Initial Enumeration
+
+### TrackScan
+
+#### Introduction
+
+TrackScan is an automated port scanning tool designed to speed up the initial enumeration phase during penetration tests. Developed by the TrackHackers team, it combines fast and detailed scans to provide a comprehensive overview of open ports and services running on a target machine.
+
+#### Features
+
+- Fast initial port scanning using Nmap.
+- Detailed enumeration on open ports.
+- Easy-to-use command-line interface.
+- Customizable scanning options.
+
+#### Usage
+
+To run TrackScan, execute the following command:
+
+```
+python TrackScan.py -t <target_ip>
+```
+
+Replace `<target_ip>` with the IP address of the target machine.
+
+For example:
+
+```
+python TrackScan.py -t target.htb
+```
+
 ## Windows
 
 ### smb_tester.py
@@ -43,4 +74,3 @@ tqdm Python library (pip install tqdm)
 python main.py -i 192.168.1.1 -d example.com
 ```
 3. Run: Execute the script. A progress bar will display the status in real-time.
-4. 
