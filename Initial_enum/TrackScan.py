@@ -31,7 +31,7 @@ def quick_scan(target, pn_flag, verbose):
     return run_command(f"nmap -F {'-Pn' if pn_flag else ''} {target}", "quick scan", verbose)
 
 def full_tcp_scan(target, pn_flag, verbose):
-    return run_command(f"nmap -p- --min-rate=1000 --max-retries=1 {'-Pn' if pn_flag else ''} {target}", "full TCP scan", verbose)
+    return run_command(f"nmap -p- {'-Pn' if pn_flag else ''} {target}", "full TCP scan", verbose)
 
 def full_udp_scan(target, pn_flag, verbose):
     return run_command(f"nmap -sU --top-ports 20 {'-Pn' if pn_flag else ''} {target}", "full UDP scan", verbose)
