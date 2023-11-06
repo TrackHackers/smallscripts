@@ -11,6 +11,11 @@ def run_smbmap(username, domain, host):
     print(f"\nTesting user {username} with password as username")
     subprocess.run(["smbmap", "-u", username, "-p", username.lower(), "-d", domain, "-H", host])
 
+    #Test for weak Passwords
+    print(f"\nTesting user {username} with password \"password\"")
+    subprocess.run(["smbmap", "-u", username, "-p", "password", "-d", domain, "-H", host])
+
+
 def main():
     parser = argparse.ArgumentParser(description='Run smbmap against a list of users.')
     parser.add_argument('-f', '--file', required=True, help='Path to the file containing usernames.')
