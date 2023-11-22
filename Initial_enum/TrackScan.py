@@ -1,6 +1,7 @@
 import subprocess
 import re
 import argparse
+import platform
 
 def run_command(command, title, verbose):
     ports = {}
@@ -51,8 +52,22 @@ def detailed_scan(target, open_ports, pn_flag, verbose):
             break
 
 
-def main(target, pn_flag, verbose):
+def main(target, pn_flag, boxname, verbose):
     quick_ports = quick_scan(target, pn_flag, verbose)
+
+    # OS identification
+    current_os = platform.system()
+    print(f"[*] Running on {current_os}")
+
+    # DNS resolution setup
+    if current_os.lower() == 'linux':
+        hosts_file_path = '/etc/hosts'
+        with open(hosts_file_path, 'a') as hosts_file:
+            hosts_file.write(f"{target}\t{boxname}\n")
+        print(f"[*] Added {boxname} to {hosts_file_path} for DNS resolution")
+    else:
+        print("[!] OS not supported for DNS resolution setup")
+
     
     if quick_ports:
         detailed_scan(target, quick_ports, pn_flag, verbose)
