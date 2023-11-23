@@ -61,24 +61,55 @@ def edit_hosts_file(target, boxname):
         with open('/etc/hosts', 'r') as hosts_file:
             lines = hosts_file.readlines()
             for line in lines:
-                if target in line.split():
+                parts = line.split()
+                if len(parts) >= 2 and parts[0] == host_ip and parts[-1] == boxname:
                     existing_entry = line.strip()
 
         # Check if the existing entry already matches the correct format
-        if existing_entry == f"{host_ip}\t{target}\t{boxname}":
-            print(f"[*] {target} is already resolving to the correct IP: {host_ip}")
+        if existing_entry == f"{host_ip}\t{boxname}":
+            print(f"[*] {boxname} is already resolving to the correct IP: {host_ip}")
         else:
             # Remove any existing entry for the target before adding the new entry
             if existing_entry:
                 sudo_remove_command = f"sudo sed -i '/{target}/d' /etc/hosts"
                 subprocess.run(sudo_remove_command, shell=True, check=True)
             
-            # Add the new entry to /etc/hosts using sudo
-            sudo_command = f"echo '{host_ip}\t{target}\t{boxname}' | sudo tee -a /etc/hosts"
-            subprocess.run(sudo_command, shell=True, check=True)
-            print(f"[*] Added {boxname} to /etc/hosts associated with IP {host_ip}")
+            # Add the new entry to /etc/hosts using sudo if the IP isn't present
+            if not existing_entry:
+                sudo_command = f"echo '{host_ip}\t{boxname}' | sudo tee -a /etc/hosts"
+                subprocess.run(sudo_command, shell=True, check=True)
+                print(f"[*] Added {boxname} to /etc/hosts associated with IP {host_ip}")
+            else:
+                print(f"[*] The IP {host_ip} for {target} is already in /etc/hosts with a different entry")
+
     except socket.gaierror:
         print("[!] Error: Unable to resolve the target IP to add to /etc/hosts")
+
+def check_os(target):
+    try:
+        # Ping with a packet size of 32 bytes for Windows
+        windows_ping = subprocess.Popen(["ping", "-n", "1", "-l", "32", target], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        windows_ping.communicate(timeout=5)  # Adjust the timeout as needed
+
+        if windows_ping.returncode == 0:
+            print(f"[*] Target OS identified as: Windows")
+            return 'windows'
+    except subprocess.TimeoutExpired:
+        pass
+
+    try:
+        # Ping with a packet size of 64 bytes for Linux
+        linux_ping = subprocess.Popen(["ping", "-c", "1", "-s", "64", target], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        linux_ping.communicate(timeout=5)  # Adjust the timeout as needed
+
+        if linux_ping.returncode == 0:
+            print(f"[*] Target OS identified as: Linux")
+            return 'linux'
+    except subprocess.TimeoutExpired:
+        pass
+
+    print("[*] Unable to determine the target OS")
+    return 'unknown'
 
 def main(target, pn_flag, verbose, boxname):
  # OS identification
@@ -90,6 +121,8 @@ def main(target, pn_flag, verbose, boxname):
         edit_hosts_file(target, boxname)
     else:
         print("[!] OS not supported for DNS resolution setup")
+
+    os_type = check_os(target)
 
     quick_ports = quick_scan(target, pn_flag, verbose)
 
