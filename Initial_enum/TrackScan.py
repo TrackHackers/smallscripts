@@ -2,6 +2,7 @@ import subprocess
 import re
 import argparse
 import platform
+import socket
 
 def run_command(command, title, verbose):
     ports = {}
@@ -51,24 +52,47 @@ def detailed_scan(target, open_ports, pn_flag, verbose):
         if process.poll() is not None:
             break
 
+def edit_hosts_file(target, boxname):
+    try:
+        host_ip = socket.gethostbyname(target)
+        existing_entry = None
 
-def main(target, pn_flag, boxname, verbose):
-    quick_ports = quick_scan(target, pn_flag, verbose)
+        # Read /etc/hosts file to check for existing entries
+        with open('/etc/hosts', 'r') as hosts_file:
+            lines = hosts_file.readlines()
+            for line in lines:
+                if target in line.split():
+                    existing_entry = line.strip()
 
-    # OS identification
+        # Check if the existing entry already matches the correct format
+        if existing_entry == f"{host_ip}\t{target}\t{boxname}":
+            print(f"[*] {target} is already resolving to the correct IP: {host_ip}")
+        else:
+            # Remove any existing entry for the target before adding the new entry
+            if existing_entry:
+                sudo_remove_command = f"sudo sed -i '/{target}/d' /etc/hosts"
+                subprocess.run(sudo_remove_command, shell=True, check=True)
+            
+            # Add the new entry to /etc/hosts using sudo
+            sudo_command = f"echo '{host_ip}\t{target}\t{boxname}' | sudo tee -a /etc/hosts"
+            subprocess.run(sudo_command, shell=True, check=True)
+            print(f"[*] Added {boxname} to /etc/hosts associated with IP {host_ip}")
+    except socket.gaierror:
+        print("[!] Error: Unable to resolve the target IP to add to /etc/hosts")
+
+def main(target, pn_flag, verbose, boxname):
+ # OS identification
     current_os = platform.system()
     print(f"[*] Running on {current_os}")
 
     # DNS resolution setup
     if current_os.lower() == 'linux':
-        hosts_file_path = '/etc/hosts'
-        with open(hosts_file_path, 'a') as hosts_file:
-            hosts_file.write(f"{target}\t{boxname}\n")
-        print(f"[*] Added {boxname} to {hosts_file_path} for DNS resolution")
+        edit_hosts_file(target, boxname)
     else:
         print("[!] OS not supported for DNS resolution setup")
 
-    
+    quick_ports = quick_scan(target, pn_flag, verbose)
+
     if quick_ports:
         detailed_scan(target, quick_ports, pn_flag, verbose)
     
@@ -87,6 +111,7 @@ if __name__ == "__main__":
     parser.add_argument('-t', '--target', required=True, help='Target IP address')
     parser.add_argument('-Pn', '--no-ping', action='store_true', help='No ping, treats all hosts as online')
     parser.add_argument('-v', '--verbose', action='store_true', help='Enable verbose output')
+    parser.add_argument('-b', '--boxname', required=True, help='Specify boxname for local DNS resolution')
     args = parser.parse_args()
 
-    main(args.target, args.no_ping, args.verbose)
+    main(args.target, args.no_ping, args.verbose, args.boxname)
